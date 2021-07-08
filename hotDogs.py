@@ -11,6 +11,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.python.client import device_lib
 import matplotlib.pyplot as plt
 import numpy as np
+from tensorflow.python.framework.error_interpolation import _EXTERNAL_FILENAME_PATTERNS
 
 print(device_lib.list_local_devices())
 
@@ -145,7 +146,7 @@ debugPredictions(train_generator)
 path = train_generator_test.directory + "\\not_hot_dog\\118378.jpg"
 
 
-def debugImage(xElements: int, yElements: int, path: str):
+def debugImage(elements: int, path: str):
     from keras.preprocessing.image import load_img, img_to_array
     from keras.applications.vgg16 import preprocess_input
     from PIL.Image import ANTIALIAS
@@ -154,29 +155,25 @@ def debugImage(xElements: int, yElements: int, path: str):
     img = img_to_array(img)
     img = img.reshape((1, img.shape[0], img.shape[1], img.shape[2]))
     model.predict(img)
-    xOffset = img.shape[1] // xElements
-    yOffset = img.shape[2] // yElements
 
-    xIndex = 0
-    yIndex = 0
-    while ((xIndex * xOffset) < img.shape[1]
-           and (yIndex * yOffset) < img.shape[2]):
+    xMax = img.shape[1] / elements
+    yMax = img.shape[2] / elements
+    index = 0
+    for x, y in itertools.product(range(img.shape[1]), range(img.shape[2])):
         image = np.copy(img)
-        image[0, xIndex * xOffset:(xIndex + 1) * xOffset,
-              yIndex * yOffset: (yIndex + 1) * yOffset, :] = 0
-        xIndex += 1
-        yIndex += 1
-        print(f"index x {xIndex} index y {yIndex} offset: {xOffset}")
+
+        image[0, x: x+elements, y:y+elements, :] = 0
         plt.imshow(image[0, :, :, :] / 255.0)
         plt.show()
+        index += 1
 
-        print(model.predict(img))
+        print(model.predict(image))
         print("Should be not hotdog") if "not" in path else print(
             "Should be hotdog")
 
 
 # %%
-debugImage(10, 10, path)
+debugImage(5, path)
 
 # %%
 print(history.history.keys())
